@@ -1,13 +1,10 @@
 name: DevSecOps Pipeline
-
 on:
   push:
     branches: [main]
-
 jobs:
   security-and-build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,7 +35,7 @@ jobs:
           docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
 
       - name: Build Docker image
-        run: docker build -t devsecops-app .
+        run: docker build -t devsecops-app -f docker/Dockerfile .
 
       - name: Push to ECR
         run: |
