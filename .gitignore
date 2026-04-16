@@ -1,0 +1,14 @@
+# AWS CLI
+aws/
+awscliv2.zip
+
+# Terraform providers (très lourds)
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+
+# Python
+__pycache__/
+*.pyc
+.env
