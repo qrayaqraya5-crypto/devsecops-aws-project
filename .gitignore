@@ -12,3 +12,7 @@ terraform/.terraform.lock.hcl
 __pycache__/
 *.pyc
 .env
+awscliv2.zip
+*.zip
+terraform/.terraform/
+terraform/.terraform.lock.hcl
