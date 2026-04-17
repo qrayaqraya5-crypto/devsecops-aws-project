@@ -1,7 +1,9 @@
 name: DevSecOps Pipeline
+
 on:
   push:
     branches: [main]
+
 jobs:
   security-and-build:
     runs-on: ubuntu-latest
@@ -13,10 +15,17 @@ jobs:
         run: |
           pip install bandit
           bandit -r app/ -f json -o bandit-report.json || true
-          bandit -r app/ || true
+          echo "=== Verification failles HIGH ==="
+          if bandit -r app/ --severity-level high | grep -q "Issue:"; then
+            echo "FAILLES HIGH DETECTEES - PIPELINE BLOQUE !"
+            bandit -r app/ --severity-level high
+            exit 1
+          fi
+          echo "Aucune faille HIGH - OK"
 
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: bandit-report
           path: bandit-report.json
