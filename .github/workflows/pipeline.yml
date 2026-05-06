@@ -71,4 +71,4 @@ jobs:
           aws eks update-kubeconfig --region us-east-1 --name devsecops-cluster
           kubectl apply -f k8s/
           kubectl rollout restart deployment/devsecops-app
-          kubectl rollout status deployment/devsecops-app --timeout=120s
+          kubectl rollout status deployment/devsecops-app --timeout=300s
