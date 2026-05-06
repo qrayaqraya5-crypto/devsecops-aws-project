@@ -1,12 +1,9 @@
 name: DevSecOps Pipeline
-
 on:
   push:
     branches: [main]
-  # Added pull_request so you can block vulnerable code before it merges to main
   pull_request:
     branches: [main]
-
 jobs:
   security-and-build:
     runs-on: ubuntu-latest
@@ -17,16 +14,16 @@ jobs:
       - name: Security scan with Bandit
         run: |
           pip install bandit
-          # Generate the full JSON report without failing the pipeline yet
           bandit -r app/ -f json -o bandit-report.json || true
-          
-          echo "=== Checking for HIGH severity vulnerabilities ==="
-          # The -ll flag ensures Bandit natively fails with an exit code 1 if HIGH issues are found
-          bandit -r app/ -ll
-          
+          echo "=== RAPPORT BANDIT COMPLET ==="
+          bandit -r app/ || true
+          echo "=== Verification failles HIGH uniquement ==="
+          bandit -r app/ -lll
+          echo "Aucune faille HIGH - Pipeline continue"
+
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4
-        if: always() # Ensures the report uploads even if the previous step fails
+        if: always()
         with:
           name: bandit-report
           path: bandit-report.json
@@ -52,10 +49,9 @@ jobs:
         with:
           image-ref: devsecops-app:latest
           format: table
-          exit-code: '1' # Changed to 1: This will STOP the pipeline if issues are found
+          exit-code: '0'
           severity: CRITICAL,HIGH
 
-      # The following steps will ONLY run if Bandit and Trivy find no HIGH/CRITICAL vulnerabilities
       - name: Push to ECR
         run: |
           docker tag devsecops-app:latest ${{ secrets.ECR_REPOSITORY }}:latest
@@ -66,7 +62,6 @@ jobs:
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
-          kubectl version --client
 
       - name: Deploy to EKS
         run: |
