@@ -1,7 +1,12 @@
 name: DevSecOps Pipeline
+
 on:
   push:
     branches: [main]
+  # Added pull_request so you can block vulnerable code before it merges to main
+  pull_request:
+    branches: [main]
+
 jobs:
   security-and-build:
     runs-on: ubuntu-latest
@@ -12,33 +17,16 @@ jobs:
       - name: Security scan with Bandit
         run: |
           pip install bandit
+          # Generate the full JSON report without failing the pipeline yet
           bandit -r app/ -f json -o bandit-report.json || true
-          echo "=== RAPPORT BANDIT ==="
-          bandit -r app/ || true
-          echo "=== Verification failles HIGH/CRITICAL ==="
-          RESULTS=$(bandit -r app/ -lll -f txt 2>&1 || true)
-          HIGH_COUNT=$(bandit -r app/ -f json 2>/dev/null | python3 -c "
-import json,sys
-try:
-    data=json.load(sys.stdin)
-    high=[r for r in data.get('results',[]) if r['issue_severity'] in ('HIGH','CRITICAL')]
-    print(len(high))
-except:
-    print(0)
-")
-          echo "Failles HIGH/CRITICAL detectees: $HIGH_COUNT"
-          if [ "$HIGH_COUNT" -gt "0" ]; then
-            echo "============================================"
-            echo "PIPELINE BLOQUE : $HIGH_COUNT failles HIGH/CRITICAL !"
-            echo "============================================"
-            bandit -r app/ -lll
-            exit 1
-          fi
-          echo "Aucune faille HIGH/CRITICAL - Pipeline continue"
-
+          
+          echo "=== Checking for HIGH severity vulnerabilities ==="
+          # The -ll flag ensures Bandit natively fails with an exit code 1 if HIGH issues are found
+          bandit -r app/ -ll
+          
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() # Ensures the report uploads even if the previous step fails
         with:
           name: bandit-report
           path: bandit-report.json
@@ -64,9 +52,10 @@ except:
         with:
           image-ref: devsecops-app:latest
           format: table
-          exit-code: '0'
+          exit-code: '1' # Changed to 1: This will STOP the pipeline if issues are found
           severity: CRITICAL,HIGH
 
+      # The following steps will ONLY run if Bandit and Trivy find no HIGH/CRITICAL vulnerabilities
       - name: Push to ECR
         run: |
           docker tag devsecops-app:latest ${{ secrets.ECR_REPOSITORY }}:latest
