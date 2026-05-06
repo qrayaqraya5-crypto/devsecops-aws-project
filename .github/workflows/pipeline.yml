@@ -28,6 +28,14 @@ jobs:
           name: bandit-report
           path: bandit-report.json
 
+      - name: IaC Security scan with Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform/
+          soft_fail: true
+          output_format: cli
+        continue-on-error: true
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
