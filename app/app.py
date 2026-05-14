@@ -121,7 +121,7 @@ HTML = """
 </head>
 <body>
     <nav class="navbar">
-        <h1>🔐 DevSecOps Dashboard</h1>
+        <h1>🔐 DevSecOps Dashboard1</h1>
         <span class="status-badge">● RUNNING</span>
     </nav>
 
